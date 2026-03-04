@@ -233,9 +233,7 @@ async function startServer() {
         // 1. CREATE (POST): Assigner un élève à un rôle dans un programme
         app.post('/api/affectations', async (req, res) => {
             const { id_programme, id_eleve, type_expose, role } = req.body;
-            // types valides: 'Lecture', 'Sketch 1', 'Sketch 2', 'Sketch 3', 'Discours'
-            // roles valides: 'Titulaire', 'Partenaire' (seulement pour les sketchs)
-
+            
             try {
                 // 1. Récupérer les infos de l'élève et du programme
                 const eleve = await db.get('SELECT * FROM Eleves WHERE id = ?', [id_eleve]);
@@ -244,6 +242,21 @@ async function startServer() {
                 if (!eleve || !programme) {
                     return res.status(404).json({ error: "Élève ou Programme introuvable" });
                 }
+
+                // ==========================================
+                // 2.5 NOUVEAU : VÉRIFICATION DOUBLE RÉSERVATION
+                // ==========================================
+                const dejaAssigne = await db.get(
+                    'SELECT type_expose FROM Affectations WHERE id_programme = ? AND id_eleve = ?',
+                    [id_programme, id_eleve]
+                );
+
+                if (dejaAssigne) {
+                    return res.status(400).json({ 
+                        error: `${eleve.nom} est déjà assigné(e) à un(e) ${dejaAssigne.type_expose} pour ce programme !` 
+                    });
+                }
+                // ==========================================
 
                 // 2. Vérification: Lecture et Discours (Hommes uniquement)
                 if (['Lecture', 'Discours'].includes(type_expose)) {
@@ -262,7 +275,6 @@ async function startServer() {
 
                 // 4. Vérification pour les Sketchs (Duo et même genre)
                 if (type_expose.startsWith('Sketch')) {
-                    // Chercher qui est déjà assigné à ce sketch pour ce programme
                     const existants = await db.all(`
                         SELECT a.*, e.genre 
                         FROM Affectations a 
@@ -290,8 +302,7 @@ async function startServer() {
                     [id_programme, id_eleve, type_expose, role || 'Titulaire']
                 );
 
-                // 6. MISE À JOUR CRUCIALE : Mettre à jour la date du dernier exposé de l'élève
-                // On utilise la date du programme auquel il vient d'être assigné
+                // 6. MISE À JOUR CRUCIALE : Mettre à jour la date du dernier exposé
                 await db.run(
                     'UPDATE Eleves SET date_dernier_expose = ? WHERE id = ?',
                     [programme.date_programme, id_eleve]
