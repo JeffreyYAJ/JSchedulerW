@@ -26,30 +26,28 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
       try {
-        // Récupération des élèves prioritaires et des programmes en parallèle
         const [prioRes, progRes, allStudentsRes] = await Promise.all([
           fetch(`${API_BASE_URL}/eleves/prioritaires`),
           fetch(`${API_BASE_URL}/programmes`),
-          fetch(`${API_BASE_URL}/eleves`) // Pour avoir le total exact
+          fetch(`${API_BASE_URL}/eleves`)
         ]);
 
         const prioData = await prioRes.json();
         const progData = await progRes.json();
         const allStudentsData = await allStudentsRes.json();
 
-        setPriorityStudents(prioData.slice(0, 5)); // On garde les 5 plus urgents pour le dashboard
+        setPriorityStudents(prioData.slice(0, 5)); 
         
-        // On trie les programmes par date et on prend les 3 prochains
         const sortedProgs = progData
           .filter(p => new Date(p.date_debut_semaine) >= new Date()) // Uniquement le futur/présent
           .sort((a, b) => new Date(a.date_debut_semaine) - new Date(b.date_debut_semaine))
           .slice(0, 3);
         setUpcomingWeeks(sortedProgs);
 
-        // Mise à jour des stats
+    
         setStats({
-          total: allStudentsData.length || 120, // Valeur par défaut si vide
-          alerts: prioData.length || 12
+          total: allStudentsData.length, 
+          alerts: prioData.length 
         });
 
       } catch (error) {
@@ -130,7 +128,7 @@ const Dashboard = () => {
           <div className="flex items-baseline gap-3">
             <span className="text-4xl font-extrabold text-slate-800">{stats.alerts}</span>
             <span className="text-sm font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md flex items-center gap-1">
-              ↗ {Math.min(3, stats.alerts)} nouveaux
+               {Math.min(3, stats.alerts)} nouveau(x)
             </span>
           </div>
         </div>
