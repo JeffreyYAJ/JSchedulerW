@@ -54,17 +54,29 @@ async function startServer() {
             }
         });
 
-        // 3. GET: Retrieve "Priority" eleves (The 3-month rule!)
+        // 3. READ: Récupérer les élèves "Prioritaires" / "Critiques" (Règle des 3 mois)
+        // Accepte un filtre optionnel par genre : /api/eleves/prioritaires?genre=H
         app.get('/api/eleves/prioritaires', async (req, res) => {
+            const { genre } = req.query; // Récupère le paramètre dans l'URL
+
             try {
-                // SQLite has built-in date functions. 
-                // We fetch students who NEVER had an expose (NULL) OR haven't had one in 3 months.
-                const prioritaires = await db.all(`
+                // La requête de base pour les personnes critiques
+                let sqlQuery = `
                     SELECT * FROM Eleves 
-                    WHERE date_dernier_expose IS NULL 
-                       OR date_dernier_expose <= date('now', '-3 months')
-                    ORDER BY date_dernier_expose ASC
-                `);
+                    WHERE (date_dernier_expose IS NULL OR date_dernier_expose <= date('now', '-3 months'))
+                `;
+                let params = [];
+
+                // Si un genre est spécifié et valide, on ajoute le filtre
+                if (genre === 'H' || genre === 'F') {
+                    sqlQuery += ` AND genre = ?`;
+                    params.push(genre);
+                }
+
+                // On trie toujours du plus urgent (NULL ou plus ancienne date) au moins urgent
+                sqlQuery += ` ORDER BY date_dernier_expose ASC`;
+
+                const prioritaires = await db.all(sqlQuery, params);
                 res.json(prioritaires);
             } catch (error) {
                 res.status(500).json({ error: "Erreur lors de la vérification des priorités" });
