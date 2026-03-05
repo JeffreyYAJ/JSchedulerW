@@ -337,6 +337,116 @@ async function startServer() {
                 res.status(500).json({ error: "Erreur lors de la récupération du planning" });
             }
         });
+
+        // ==========================================
+        // ROUTE DE GÉNÉRATION AUTOMATIQUE (AUTO-SCHEDULER)
+        // ==========================================
+
+        app.post('/api/programmes/generer', async (req, res) => {
+            // Par défaut, on génère à partir d'aujourd'hui, pour 8 semaines
+            const { date_debut, nombre_semaines = 8 } = req.body;
+            
+            if (!date_debut) {
+                return res.status(400).json({ error: "La date de début (YYYY-MM-DD) est requise." });
+            }
+
+            let dateCourante = new Date(date_debut);
+            let semainesGenerees = 0;
+
+            try {
+                // On boucle pour chaque semaine
+                for (let i = 0; i < nombre_semaines; i++) {
+                    const dateStr = dateCourante.toISOString().split('T')[0];
+                    
+                    // 1. Déterminer aléatoirement s'il y a un discours (50% de chance)
+                    const contient_discours = Math.random() < 0.5 ? 1 : 0;
+
+                    // 2. Créer le programme
+                    const progResult = await db.run(
+                        'INSERT INTO Programmes (date_programme, contient_discours) VALUES (?, ?)',
+                        [dateStr, contient_discours]
+                    );
+                    const id_programme = progResult.lastID;
+
+                    // 3. Récupérer TOUS les élèves, triés par date (les plus anciens / NULL en premier)
+                    // "date_dernier_expose IS NOT NULL" met les NULL en haut de la liste
+                    const elevesDispos = await db.all(`
+                        SELECT * FROM Eleves 
+                        ORDER BY date_dernier_expose IS NOT NULL, date_dernier_expose ASC
+                    `);
+
+                    let hommes = elevesDispos.filter(e => e.genre === 'H');
+                    let femmes = elevesDispos.filter(e => e.genre === 'F');
+
+                    // Fonction utilitaire pour piocher N élèves et les retirer de la liste
+                    const piocherEleves = (liste, nombre) => {
+                        if (liste.length < nombre) return null; // Pas assez d'élèves
+                        return liste.splice(0, nombre); // Extrait et renvoie les premiers
+                    };
+
+                    const affectationsASauvegarder = [];
+
+                    // 4. Distribution des rôles
+                    // LECTURE (1 Homme)
+                    const lecteur = piocherEleves(hommes, 1);
+                    if (lecteur) affectationsASauvegarder.push({ id_eleve: lecteur[0].id, type: 'Lecture', role: 'Titulaire' });
+
+                    // DISCOURS OU SKETCH 3
+                    if (contient_discours) {
+                        const orateur = piocherEleves(hommes, 1);
+                        if (orateur) affectationsASauvegarder.push({ id_eleve: orateur[0].id, type: 'Discours', role: 'Titulaire' });
+                    } else {
+                        // Sketch 3 (Choix aléatoire du genre si possible)
+                        const listeChoisie = (Math.random() < 0.5 && hommes.length >= 2) ? hommes : femmes;
+                        const duoSketch3 = piocherEleves(listeChoisie.length >= 2 ? listeChoisie : (hommes.length >= 2 ? hommes : femmes), 2);
+                        if (duoSketch3) {
+                            affectationsASauvegarder.push({ id_eleve: duoSketch3[0].id, type: 'Sketch 3', role: 'Titulaire' });
+                            affectationsASauvegarder.push({ id_eleve: duoSketch3[1].id, type: 'Sketch 3', role: 'Partenaire' });
+                        }
+                    }
+
+                    // SKETCH 1 (H/H ou F/F)
+                    let listeSketch1 = (Math.random() < 0.5 && femmes.length >= 2) ? femmes : hommes;
+                    const duoSketch1 = piocherEleves(listeSketch1.length >= 2 ? listeSketch1 : (femmes.length >= 2 ? femmes : hommes), 2);
+                    if (duoSketch1) {
+                        affectationsASauvegarder.push({ id_eleve: duoSketch1[0].id, type: 'Sketch 1', role: 'Titulaire' });
+                        affectationsASauvegarder.push({ id_eleve: duoSketch1[1].id, type: 'Sketch 1', role: 'Partenaire' });
+                    }
+
+                    // SKETCH 2 (H/H ou F/F)
+                    let listeSketch2 = (Math.random() < 0.5 && hommes.length >= 2) ? hommes : femmes;
+                    const duoSketch2 = piocherEleves(listeSketch2.length >= 2 ? listeSketch2 : (hommes.length >= 2 ? hommes : femmes), 2);
+                    if (duoSketch2) {
+                        affectationsASauvegarder.push({ id_eleve: duoSketch2[0].id, type: 'Sketch 2', role: 'Titulaire' });
+                        affectationsASauvegarder.push({ id_eleve: duoSketch2[1].id, type: 'Sketch 2', role: 'Partenaire' });
+                    }
+
+                    // 5. Sauvegarder les affectations en base de données et mettre à jour les dates
+                    for (let aff of affectationsASauvegarder) {
+                        await db.run(
+                            'INSERT INTO Affectations (id_programme, id_eleve, type_expose, role) VALUES (?, ?, ?, ?)',
+                            [id_programme, aff.id_eleve, aff.type, aff.role]
+                        );
+                        // C'est ici que la magie de l'équité opère : on met à jour la date tout de suite
+                        // pour que cet élève passe en bas de la liste à la prochaine itération de la boucle !
+                        await db.run(
+                            'UPDATE Eleves SET date_dernier_expose = ? WHERE id = ?',
+                            [dateStr, aff.id_eleve]
+                        );
+                    }
+
+                    // Passer à la semaine suivante (+7 jours)
+                    dateCourante.setDate(dateCourante.getDate() + 7);
+                    semainesGenerees++;
+                }
+
+                res.status(201).json({ message: `${semainesGenerees} semaines générées avec succès !` });
+
+            } catch (error) {
+                console.error(error);
+                res.status(500).json({ error: "Erreur lors de la génération automatique." });
+            }
+        });
     } catch (error) {
         console.error("Failed to start server:", error);
     }
