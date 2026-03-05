@@ -55,9 +55,8 @@ async function startServer() {
         });
 
         // 3. READ: Récupérer les élèves "Prioritaires" / "Critiques" (Règle des 3 mois)
-        // Accepte un filtre optionnel par genre : /api/eleves/prioritaires?genre=H
         app.get('/api/eleves/prioritaires', async (req, res) => {
-            const { genre } = req.query; // Récupère le paramètre dans l'URL
+            const { genre } = req.query; 
 
             try {
                 // La requête de base pour les personnes critiques
@@ -126,8 +125,6 @@ async function startServer() {
         app.delete('/api/eleves/:id', async (req, res) => {
             const { id } = req.params;
             try {
-                // Attention: Si tu supprimes un élève, tu devras plus tard gérer
-                // ce qui se passe avec ses anciennes affectations (ex: les supprimer aussi ou les mettre à null)
                 const result = await db.run('DELETE FROM Eleves WHERE id = ?', [id]);
                 
                 if (result.changes === 0) {
@@ -216,7 +213,6 @@ async function startServer() {
         app.delete('/api/programmes/:id', async (req, res) => {
             const { id } = req.params;
             try {
-                // Note: In a full app, you also want to delete the Affectations linked to this programme!
                 const result = await db.run('DELETE FROM Programmes WHERE id = ?', [id]);
                 
                 if (result.changes === 0) {

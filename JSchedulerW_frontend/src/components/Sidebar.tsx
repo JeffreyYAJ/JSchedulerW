@@ -27,15 +27,16 @@ const Sidebar = () => {
 
       {/* Navigation Links */}
       <nav className="space-y-3 flex-1">
-        <button className="w-full flex items-center gap-3 text-slate-500 font-semibold p-3 rounded-xl hover:bg-slate-50 transition-colors">
+        <NavLink to="/" className={navLinkClass}>
           <LayoutDashboard size={20} /> Dashboard
-        </button>
+        </NavLink>
+
 
         <NavLink to="/students" className={navLinkClass}>
           <Users size={20} /> Students
         </NavLink>
 
-        <NavLink to="/schedule" className={navLinkClass}>
+        <NavLink to="/programmes" className={navLinkClass}>
           <Calendar size={20} /> Schedule
         </NavLink>
 
