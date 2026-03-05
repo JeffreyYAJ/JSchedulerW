@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-green: #007a5e;
+  --color-brand-yellow: #fcd116;
+  --color-brand-red: #ce1126;
+  --color-brand-surface: #f9f9f7;
+  --color-brand-text: #1a1a1a;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-surface text-brand-text font-sans antialiased;
+    /* Basic scroll behavior */
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Reusable Button Variants */
+  .btn {
+    @apply inline-flex items-center justify-center rounded-full px-6 py-3 font-semibold transition-all duration-300 transform active:scale-95 touch-manipulation;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-full px-6 py-3 font-semibold transition-all duration-300 transform active:scale-95 touch-manipulation bg-brand-green text-white hover:bg-[#005f48] shadow-md hover:shadow-lg focus:ring-4 focus:ring-brand-green/30;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-full px-6 py-3 font-semibold transition-all duration-300 transform active:scale-95 touch-manipulation bg-brand-yellow text-brand-text hover:bg-[#e0b810] shadow-md hover:shadow-lg focus:ring-4 focus:ring-brand-yellow/30;
+  }
+
+  .btn-accent {
+    @apply inline-flex items-center justify-center rounded-full px-6 py-3 font-semibold transition-all duration-300 transform active:scale-95 touch-manipulation bg-brand-red text-white hover:bg-[#a10e1e] shadow-md hover:shadow-lg focus:ring-4 focus:ring-brand-red/30;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center rounded-full px-6 py-3 font-semibold transition-all duration-300 transform active:scale-95 touch-manipulation border-2 border-brand-green text-brand-green hover:bg-brand-green hover:text-white bg-transparent;
+  }
+
+  /* Structural Cards */
+  .card-tactile {
+    @apply bg-white rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-black/5 transform hover:-translate-y-1;
+  }
+
+  /* Specific Themed Cards */
+  .card-yellow {
+    @apply bg-white rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-black/5 transform hover:-translate-y-1 border-b-4 border-b-brand-yellow;
+  }
+
+  .card-red {
+    @apply bg-white rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-black/5 transform hover:-translate-y-1 border-b-4 border-b-brand-red;
+  }
+
+  .card-green {
+    @apply bg-white rounded-2xl p-6 md:p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-black/5 transform hover:-translate-y-1 border-b-4 border-b-brand-green;
+  }
+
+  /* Typography Utilities */
+  .heading-hero {
+    @apply text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight;
+  }
+
+  .heading-section {
+    @apply text-3xl sm:text-4xl font-bold;
+  }
+
+  .text-sub {
+    @apply text-lg sm:text-xl text-brand-text/80;
+  }
+}
