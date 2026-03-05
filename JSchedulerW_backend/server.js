@@ -34,15 +34,15 @@ async function startServer() {
 
         // 2. POST: Add a new eleve
         app.post('/api/eleves', async (req, res) => {
-            const { nom, genre } = req.body; // Expecting JSON like { "nom": "Jean", "genre": "H" }
+            const { nom, genre } = req.body; 
             
-            // Basic validation
+            
             if (!nom || !genre || (genre !== 'H' && genre !== 'F')) {
                 return res.status(400).json({ error: "Nom et genre (H ou F) valides sont requis" });
             }
 
             try {
-                // By default, date_dernier_expose will be NULL (which is fine, they are new)
+               
                 const result = await db.run(
                     'INSERT INTO Eleves (nom, genre) VALUES (?, ?)',
                     [nom, genre]
@@ -145,22 +145,19 @@ async function startServer() {
 
         // 1. CREATE (POST): Add a new empty programme for a specific date
         app.post('/api/programmes', async (req, res) => {
-            // contient_discours is a boolean (true/false)
-            const { date_programme, contient_discours } = req.body; 
-
-            if (!date_programme) {
-                return res.status(400).json({ error: "La date du programme est requise" });
+    
+            const { date_debut_semaine, date_fin_semaine, contient_discours } = req.body;
+            
+            if (!date_debut_semaine || !date_fin_semaine) {
+                return res.status(400).json({ error: "Les dates de début et de fin de semaine sont requises." });
             }
 
             try {
                 const result = await db.run(
-                    'INSERT INTO Programmes (date_programme, contient_discours) VALUES (?, ?)',
-                    [date_programme, contient_discours ? 1 : 0] // SQLite stores booleans as 1 or 0
+                    'INSERT INTO Programmes (date_debut_semaine, date_fin_semaine, contient_discours) VALUES (?, ?, ?)',
+                    [date_debut_semaine, date_fin_semaine, contient_discours ? 1 : 0]
                 );
-                res.status(201).json({ 
-                    message: "Programme créé avec succès", 
-                    id: result.lastID 
-                });
+                res.status(201).json({ id: result.lastID });
             } catch (error) {
                 res.status(500).json({ error: "Erreur lors de la création du programme" });
             }
@@ -169,20 +166,13 @@ async function startServer() {
         // 2. READ (GET): Retrieve all programmes (ordered by newest first)
         app.get('/api/programmes', async (req, res) => {
             try {
-                const programmes = await db.all('SELECT * FROM Programmes ORDER BY date_programme DESC');
                 
-                // Convert 1/0 back to true/false for the frontend
-                const formattedProgrammes = programmes.map(prog => ({
-                    ...prog,
-                    contient_discours: prog.contient_discours === 1
-                }));
-
-                res.json(formattedProgrammes);
+                const programmes = await db.all('SELECT * FROM Programmes ORDER BY date_debut_semaine DESC');
+                res.json(programmes);
             } catch (error) {
                 res.status(500).json({ error: "Erreur lors de la récupération des programmes" });
             }
         });
-
         // 3. READ ONE (GET): Retrieve a single programme by its ID
         app.get('/api/programmes/:id', async (req, res) => {
             const { id } = req.params;
@@ -255,9 +245,6 @@ async function startServer() {
                     return res.status(404).json({ error: "Élève ou Programme introuvable" });
                 }
 
-                // ==========================================
-                // 2.5 NOUVEAU : VÉRIFICATION DOUBLE RÉSERVATION
-                // ==========================================
                 const dejaAssigne = await db.get(
                     'SELECT type_expose FROM Affectations WHERE id_programme = ? AND id_eleve = ?',
                     [id_programme, id_eleve]
@@ -268,9 +255,7 @@ async function startServer() {
                         error: `${eleve.nom} est déjà assigné(e) à un(e) ${dejaAssigne.type_expose} pour ce programme !` 
                     });
                 }
-                // ==========================================
 
-                // 2. Vérification: Lecture et Discours (Hommes uniquement)
                 if (['Lecture', 'Discours'].includes(type_expose)) {
                     if (eleve.genre !== 'H') {
                         return res.status(400).json({ error: `${type_expose} est réservé aux hommes.` });
@@ -314,10 +299,11 @@ async function startServer() {
                     [id_programme, id_eleve, type_expose, role || 'Titulaire']
                 );
 
+
                 // 6. MISE À JOUR CRUCIALE : Mettre à jour la date du dernier exposé
                 await db.run(
                     'UPDATE Eleves SET date_dernier_expose = ? WHERE id = ?',
-                    [programme.date_programme, id_eleve]
+                    [programme.date_debut_semaine, id_eleve]
                 );
 
                 res.status(201).json({ 
@@ -368,15 +354,21 @@ async function startServer() {
             try {
                 // On boucle pour chaque semaine
                 for (let i = 0; i < nombre_semaines; i++) {
-                    const dateStr = dateCourante.toISOString().split('T')[0];
+                    // Calcul de la date de début
+                    const dateDebutStr = dateCourante.toISOString().split('T')[0];
+                    
+                    // Calcul de la date de fin (+6 jours pour faire une semaine complète)
+                    let dateFin = new Date(dateCourante);
+                    dateFin.setDate(dateFin.getDate() + 6);
+                    const dateFinStr = dateFin.toISOString().split('T')[0];
                     
                     // 1. Déterminer aléatoirement s'il y a un discours (50% de chance)
                     const contient_discours = Math.random() < 0.5 ? 1 : 0;
 
-                    // 2. Créer le programme
+                    // 2. Créer le programme avec les DEUX dates
                     const progResult = await db.run(
-                        'INSERT INTO Programmes (date_programme, contient_discours) VALUES (?, ?)',
-                        [dateStr, contient_discours]
+                        'INSERT INTO Programmes (date_debut_semaine, date_fin_semaine, contient_discours) VALUES (?, ?, ?)',
+                        [dateDebutStr, dateFinStr, contient_discours]
                     );
                     const id_programme = progResult.lastID;
 
@@ -439,11 +431,9 @@ async function startServer() {
                             'INSERT INTO Affectations (id_programme, id_eleve, type_expose, role) VALUES (?, ?, ?, ?)',
                             [id_programme, aff.id_eleve, aff.type, aff.role]
                         );
-                        // C'est ici que la magie de l'équité opère : on met à jour la date tout de suite
-                        // pour que cet élève passe en bas de la liste à la prochaine itération de la boucle !
                         await db.run(
                             'UPDATE Eleves SET date_dernier_expose = ? WHERE id = ?',
-                            [dateStr, aff.id_eleve]
+                            [dateDebutStr, aff.id_eleve] // <-- On utilise dateDebutStr ici
                         );
                     }
 

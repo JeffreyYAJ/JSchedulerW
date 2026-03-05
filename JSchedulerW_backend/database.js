@@ -3,10 +3,15 @@ const { open } = require('sqlite');
 
 async function setupDatabase() {
     const db = await open({
-        filename: './database.db',
+        filename: './database.db', // C'est lui le coupable !
         driver: sqlite3.Database
     });
 
+    // 🚨 On force la suppression des anciennes tables pour appliquer la nouvelle structure
+    await db.exec(`DROP TABLE IF EXISTS Affectations;`);
+    await db.exec(`DROP TABLE IF EXISTS Programmes;`);
+    // Décommente la ligne ci-dessous si tu veux aussi vider la table Eleves
+    // await db.exec(`DROP TABLE IF EXISTS Eleves;`); 
     
     await db.exec(`
         CREATE TABLE IF NOT EXISTS Eleves (
@@ -17,10 +22,12 @@ async function setupDatabase() {
         )
     `);
 
+    // 👇 LA MODIFICATION EST ICI : Les deux nouvelles colonnes
     await db.exec(`
         CREATE TABLE IF NOT EXISTS Programmes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            date_programme DATE NOT NULL,
+            date_debut_semaine DATE NOT NULL,
+            date_fin_semaine DATE NOT NULL,
             contient_discours BOOLEAN NOT NULL DEFAULT 0 
         )
     `);

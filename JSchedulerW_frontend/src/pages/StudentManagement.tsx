@@ -138,34 +138,7 @@ const StudentManagement = () => {
 
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans">
-      {/* Sidebar (Simplifiée pour l'exemple) */}
-      <aside className="w-64 bg-white border-r border-slate-200 p-6 flex flex-col gap-8 shadow-sm z-10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
-            <User className="text-white" size={24} />
-          </div>
-          <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-500">
-            EduScheduler
-          </h1>
-        </div>
 
-        <nav className="space-y-2 mt-4">
-          <button className="w-full flex items-center gap-3 text-slate-500 font-medium p-3 rounded-lg hover:bg-slate-50 transition-colors">
-            Dashboard
-          </button>
-          <button className="w-full flex items-center gap-3 bg-blue-50 text-blue-700 p-3 rounded-lg font-bold shadow-sm border border-blue-100">
-            Students
-          </button>
-          <button className="w-full flex items-center justify-between text-slate-500 font-medium p-3 rounded-lg hover:bg-slate-50 transition-colors group">
-            <div className="flex items-center gap-3">Alerts</div>
-            {overdueCount > 0 && (
-              <div className="flex items-center justify-center w-6 h-6 bg-red-500 text-white rounded-full text-xs font-bold shadow-md animate-bounce group-hover:animate-none">
-                {overdueCount}
-              </div>
-            )}
-          </button>
-        </nav>
-      </aside>
 
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-y-auto">

@@ -1,215 +1,158 @@
 import React, { useState } from 'react';
-import { Calendar, Sparkles, BookOpen, Users, Mic, User, CheckCircle2 } from 'lucide-react';
+import { User, Sparkles, BookOpen, Users as UsersIcon, Mic, CheckCircle2 } from 'lucide-react';
 
 const CreateSession = () => {
-  // États pour gérer l'interface
-  const [activeSlot, setActiveSlot] = useState('sketch3'); // 'lecture', 'sketch1', 'sketch2', 'sketch3'
-  const [sketch3Type, setSketch3Type] = useState('sketch3'); // 'sketch3' ou 'discours'
+  const [activeSlot, setActiveSlot] = useState('sketch3'); 
+  const [sketch3Type, setSketch3Type] = useState('sketch3'); 
+
+  const getConfigurationSlots = () => {
+    switch (activeSlot) {
+      case 'lecture':
+        return [
+          { id: 1, label: 'Lecteur', rule: 'Uniquement des hommes' }
+        ];
+      case 'sketch1':
+      case 'sketch2':
+        return [
+          { id: 1, label: 'Élève 1', rule: 'Sélectionner le premier élève' },
+          { id: 2, label: 'Élève 2', rule: 'Doit être du même sexe que l\'élève 1' }
+        ];
+      case 'sketch3':
+        if (sketch3Type === 'discours') {
+          return [
+            { id: 1, label: 'Orateur (Discours)', rule: 'Uniquement des hommes' }
+          ];
+        }
+        return [
+          { id: 1, label: 'Élève 1 (Sketch 3)', rule: 'Sélectionner le premier élève' },
+          { id: 2, label: 'Élève 2 (Sketch 3)', rule: 'Doit être du même sexe que l\'élève 1' }
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const slotsToRender = getConfigurationSlots();
 
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-800">
-      {/* ----------------- HEADER NAV ----------------- */}
-      <header className="border-b border-slate-100 py-4 px-8 flex justify-between items-center max-w-6xl mx-auto">
-        <div className="flex items-center gap-2">
-          <Calendar className="text-blue-600" size={24} />
-          <span className="text-xl font-bold">ExposéPlanner</span>
+    <div className="p-8 max-w-5xl mx-auto">
+      
+      {/* Header */}
+      <div className="flex justify-between items-end mb-10 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight mb-2">Create New Session</h1>
+          <p className="text-slate-500">Planifiez les exposés et assignez les élèves éligibles aux créneaux.</p>
         </div>
-        <nav className="flex items-center gap-8 text-sm font-medium text-slate-500">
-          <a href="#" className="hover:text-slate-800 transition-colors">Dashboard</a>
-          <a href="#" className="text-blue-600">Sessions</a>
-          <a href="#" className="hover:text-slate-800 transition-colors">Students</a>
-          <a href="#" className="hover:text-slate-800 transition-colors">Settings</a>
-          <div className="w-8 h-8 rounded-full bg-orange-200 ml-4 border-2 border-white shadow-sm"></div>
-        </nav>
-      </header>
+        <button className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-sm active:scale-95">
+          <Sparkles size={18} /> Smart Suggest
+        </button>
+      </div>
 
-      {/* ----------------- MAIN CONTENT ----------------- */}
-      <main className="max-w-4xl mx-auto py-10 px-4">
-        
-        {/* Page Title & Smart Suggest */}
-        <div className="flex justify-between items-end mb-10">
-          <div>
-            <h1 className="text-4xl font-bold mb-2">Create New Session</h1>
-            <p className="text-slate-500">Plan exposés and assign eligible students to presentation slots.</p>
+      {/* Cartes de Sélection */}
+      <div className="mb-10">
+        <h2 className="text-xl font-bold text-slate-800 mb-2">Session Setup</h2>
+        <p className="text-slate-500 mb-6 text-sm">Cliquez sur un créneau pour y assigner des élèves.</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Lecture */}
+          <div onClick={() => setActiveSlot('lecture')} className={`p-5 rounded-2xl border-2 cursor-pointer transition-all relative group ${activeSlot === 'lecture' ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-slate-100 bg-white hover:border-blue-300'}`}>
+            {activeSlot === 'lecture' && <CheckCircle2 className="absolute top-4 right-4 text-blue-500 animate-in zoom-in" size={20} />}
+            <div className={`w-12 h-12 rounded-xl mb-4 flex items-center justify-center ${activeSlot === 'lecture' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500'}`}>
+              <BookOpen size={24} />
+            </div>
+            <h3 className="font-bold text-slate-800 mb-1">Lecture</h3>
+            <p className="text-sm text-slate-500">1 homme</p>
           </div>
-          <button className="bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-sm">
-            <Sparkles size={18} /> Smart Suggest
-          </button>
-        </div>
 
-        {/* Session Setup Section */}
-        <div className="mb-10">
-          <h2 className="text-xl font-bold mb-2">Session Setup</h2>
-          <p className="text-slate-500 mb-6 text-sm">Configure the slots for this session. The system highlights overdue students.</p>
-
-          {/* Slots Cards */}
-          <div className="grid grid-cols-4 gap-4">
-            {/* Card 1: Lecture */}
-            <div 
-              onClick={() => setActiveSlot('lecture')}
-              className={`p-5 rounded-xl border cursor-pointer transition-all relative ${
-                activeSlot === 'lecture' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300'
-              }`}
-            >
-              {activeSlot === 'lecture' && <CheckCircle2 className="absolute top-3 right-3 text-blue-500" size={18} />}
-              <BookOpen className={`mb-3 ${activeSlot === 'lecture' ? 'text-blue-600' : 'text-slate-600'}`} size={24} />
-              <h3 className="font-bold mb-1">Lecture</h3>
-              <p className="text-sm text-slate-500">Assigned: Sarah Jenkins</p>
+          {/* Sketch 1 */}
+          <div onClick={() => setActiveSlot('sketch1')} className={`p-5 rounded-2xl border-2 cursor-pointer transition-all relative group ${activeSlot === 'sketch1' ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-slate-100 bg-white hover:border-blue-300'}`}>
+            {activeSlot === 'sketch1' && <CheckCircle2 className="absolute top-4 right-4 text-blue-500 animate-in zoom-in" size={20} />}
+            <div className={`w-12 h-12 rounded-xl mb-4 flex items-center justify-center ${activeSlot === 'sketch1' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500'}`}>
+              <UsersIcon size={24} />
             </div>
+            <h3 className="font-bold text-slate-800 mb-1">Sketch 1</h3>
+            <p className="text-sm text-slate-500">2 élèves (H-H / F-F)</p>
+          </div>
 
-            {/* Card 2: Sketch 1 */}
-            <div 
-              onClick={() => setActiveSlot('sketch1')}
-              className={`p-5 rounded-xl border cursor-pointer transition-all relative ${
-                activeSlot === 'sketch1' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300'
-              }`}
-            >
-              {activeSlot === 'sketch1' && <CheckCircle2 className="absolute top-3 right-3 text-blue-500" size={18} />}
-              <Users className={`mb-3 ${activeSlot === 'sketch1' ? 'text-blue-600' : 'text-slate-600'}`} size={24} />
-              <h3 className="font-bold mb-1">Sketch 1</h3>
-              <p className="text-sm text-slate-500">Needs 2 students</p>
+          {/* Sketch 2 */}
+          <div onClick={() => setActiveSlot('sketch2')} className={`p-5 rounded-2xl border-2 cursor-pointer transition-all relative group ${activeSlot === 'sketch2' ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-slate-100 bg-white hover:border-blue-300'}`}>
+            {activeSlot === 'sketch2' && <CheckCircle2 className="absolute top-4 right-4 text-blue-500 animate-in zoom-in" size={20} />}
+            <div className={`w-12 h-12 rounded-xl mb-4 flex items-center justify-center ${activeSlot === 'sketch2' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500'}`}>
+              <UsersIcon size={24} />
             </div>
+            <h3 className="font-bold text-slate-800 mb-1">Sketch 2</h3>
+            <p className="text-sm text-slate-500">2 élèves (H-H / F-F)</p>
+          </div>
 
-            {/* Card 3: Sketch 2 */}
-            <div 
-              onClick={() => setActiveSlot('sketch2')}
-              className={`p-5 rounded-xl border cursor-pointer transition-all relative ${
-                activeSlot === 'sketch2' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300'
-              }`}
-            >
-              {activeSlot === 'sketch2' && <CheckCircle2 className="absolute top-3 right-3 text-blue-500" size={18} />}
-              <Users className={`mb-3 ${activeSlot === 'sketch2' ? 'text-blue-600' : 'text-slate-600'}`} size={24} />
-              <h3 className="font-bold mb-1">Sketch 2</h3>
-              <p className="text-sm text-slate-500">Needs 2 students</p>
+          {/* Sketch 3 / Discours */}
+          <div onClick={() => setActiveSlot('sketch3')} className={`p-5 rounded-2xl border-2 cursor-pointer transition-all relative group ${activeSlot === 'sketch3' ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-slate-100 bg-white hover:border-blue-300'}`}>
+            {activeSlot === 'sketch3' && <CheckCircle2 className="absolute top-4 right-4 text-blue-500 animate-in zoom-in" size={20} />}
+            <div className={`w-12 h-12 rounded-xl mb-4 flex items-center justify-center ${activeSlot === 'sketch3' ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-500'}`}>
+              {sketch3Type === 'discours' ? <Mic size={24} /> : <User size={24} />}
             </div>
-
-            {/* Card 4: Sketch 3 / Discours */}
-            <div 
-              onClick={() => setActiveSlot('sketch3')}
-              className={`p-5 rounded-xl border cursor-pointer transition-all relative ${
-                activeSlot === 'sketch3' ? 'border-blue-500 bg-blue-50' : 'border-slate-200 hover:border-blue-300'
-              }`}
-            >
-              {activeSlot === 'sketch3' && <CheckCircle2 className="absolute top-3 right-3 text-blue-500" size={18} />}
-              {sketch3Type === 'discours' ? (
-                <Mic className={`mb-3 ${activeSlot === 'sketch3' ? 'text-blue-600' : 'text-slate-600'}`} size={24} />
-              ) : (
-                <User className={`mb-3 ${activeSlot === 'sketch3' ? 'text-blue-600' : 'text-slate-600'}`} size={24} />
-              )}
-              <h3 className="font-bold mb-1">Sketch 3 / Discours</h3>
-              <p className="text-sm text-slate-500">Select type below</p>
-            </div>
+            <h3 className="font-bold text-slate-800 mb-1">Sketch 3 / Discours</h3>
+            <p className="text-sm text-slate-500">Au choix</p>
           </div>
         </div>
+      </div>
 
-        {/* ----------------- SLOT CONFIGURATION ----------------- */}
-        {activeSlot === 'sketch3' && (
-          <div className="mb-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold">Slot: Sketch 3 / Discours Configuration</h2>
-              
-              {/* Toggle Switch */}
-              <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
-                <button 
-                  onClick={() => setSketch3Type('sketch3')}
-                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                    sketch3Type === 'sketch3' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  Sketch 3
-                </button>
-                <button 
-                  onClick={() => setSketch3Type('discours')}
-                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
-                    sketch3Type === 'discours' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'
-                  }`}
-                >
-                  Discours
-                </button>
-              </div>
+      {/* ----------------- ZONE DE CONFIGURATION DYNAMIQUE ----------------- */}
+      {/* L'astuce est ici : le key={activeSlot} force l'animation à se relancer à chaque clic */}
+      <div key={activeSlot} className="mb-10 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-slate-800 capitalize">
+            Configuration : {activeSlot.replace('sketch', 'Sketch ')}
+          </h2>
+          
+          {/* Toggle pour Sketch 3 uniquement */}
+          {activeSlot === 'sketch3' && (
+            <div className="flex bg-slate-200/50 p-1.5 rounded-xl border border-slate-200">
+              <button 
+                onClick={() => setSketch3Type('sketch3')}
+                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
+                  sketch3Type === 'sketch3' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Sketch 3
+              </button>
+              <button 
+                onClick={() => setSketch3Type('discours')}
+                className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
+                  sketch3Type === 'discours' ? 'bg-white shadow-sm text-slate-800' : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Discours
+              </button>
             </div>
+          )}
+        </div>
 
-            {/* Assignment Rows */}
-            <div className="space-y-3">
-              {/* Slot 1 (Always visible) */}
-              <div className="flex items-center justify-between p-4 border border-slate-200 rounded-xl bg-slate-50/50">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400">
-                    <User size={20} />
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-slate-800">Student 1</h4>
-                    <p className="text-sm text-slate-500">Select eligible student</p>
-                  </div>
-                </div>
-                <button className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg text-sm transition-colors">
-                  Assign Student
-                </button>
-              </div>
-
-              {/* Slot 2 (Visible only if Sketch 3) */}
-              {sketch3Type === 'sketch3' && (
-                <div className="flex items-center justify-between p-4 border border-slate-200 rounded-xl bg-slate-50/50">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-slate-100 rounded-lg flex items-center justify-center text-slate-400">
-                      <User size={20} />
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-slate-800">Student 2</h4>
-                      <p className="text-sm text-slate-500">Select eligible student</p>
-                    </div>
-                  </div>
-                  <button className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg text-sm transition-colors">
-                    Assign Student
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ----------------- SUGGESTED CANDIDATES ----------------- */}
-        <div className="mb-10">
-          <h3 className="font-bold text-lg mb-4">Suggested Candidates (Urgent)</h3>
-          <div className="flex gap-4">
-            {/* Candidate 1 */}
-            <div className="flex-1 flex items-center justify-between p-4 rounded-xl border border-red-200 bg-red-50/50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-bold overflow-hidden">
-                  <img src="/api/placeholder/40/40" alt="Avatar" className="w-full h-full object-cover opacity-80" />
+        {/* Lignes générées dynamiquement */}
+        <div className="space-y-4">
+          {slotsToRender.map((slot) => (
+            <div key={slot.id} className="flex items-center justify-between p-5 border border-slate-200 rounded-2xl bg-white shadow-sm hover:border-blue-200 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center text-slate-400">
+                  <User size={20} />
                 </div>
                 <div>
-                  <h4 className="font-medium text-slate-800 text-sm">Michael Chang</h4>
-                  <p className="text-xs text-red-500 font-medium">Overdue by 3 weeks</p>
+                  <h4 className="font-bold text-slate-800">{slot.label}</h4>
+                  <p className="text-sm text-slate-500">{slot.rule}</p>
                 </div>
               </div>
-              <button className="text-blue-600 text-sm font-medium hover:text-blue-800">Assign</button>
+              <button className="px-5 py-2.5 bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 font-bold rounded-xl text-sm transition-colors border border-slate-200 hover:border-blue-200 active:scale-95">
+                Assigner
+              </button>
             </div>
-
-            {/* Candidate 2 */}
-            <div className="flex-1 flex items-center justify-between p-4 rounded-xl border border-orange-200 bg-orange-50/50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold overflow-hidden">
-                  <img src="/api/placeholder/40/40" alt="Avatar" className="w-full h-full object-cover opacity-80" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-slate-800 text-sm">Emma Wilson</h4>
-                  <p className="text-xs text-orange-500 font-medium">Overdue by 1 week</p>
-                </div>
-              </div>
-              <button className="text-blue-600 text-sm font-medium hover:text-blue-800">Assign</button>
-            </div>
-          </div>
+          ))}
         </div>
+      </div>
 
-        {/* ----------------- ACTION FOOTER ----------------- */}
-        <div className="flex justify-end pt-6 border-t border-slate-100">
-          <button className="bg-blue-600 text-white px-8 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-sm">
-            Save Session
-          </button>
-        </div>
-
-      </main>
+      <div className="flex justify-end pt-6">
+        <button className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-md shadow-blue-500/30 active:scale-95">
+          Sauvegarder la session
+        </button>
+      </div>
     </div>
   );
 };
