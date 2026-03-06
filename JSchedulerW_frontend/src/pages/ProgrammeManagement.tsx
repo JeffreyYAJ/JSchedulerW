@@ -112,7 +112,7 @@ const ProgrammeManagement = () => {
                     </span>
                   ) : (
                     <span className="text-slate-400 bg-slate-100 px-2 py-1 rounded-md">
-                      Classique (Sketch 3)
+                      Classique (Cours biblique)
                     </span>
                   )}
                 </div>
@@ -171,7 +171,7 @@ const ProgrammeManagement = () => {
                   onChange={(e) => setNewProgramme({...newProgramme, contient_discours: e.target.checked})}
                 />
                 <label htmlFor="discours-toggle" className="font-medium text-slate-700 cursor-pointer">
-                  Cette semaine contient un discours (remplace le Sketch 3)
+                  Cette semaine contient un discours (remplace le cours biblique)
                 </label>
               </div>
 

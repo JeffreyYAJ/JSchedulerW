@@ -85,7 +85,7 @@ const StudentManagement = () => {
       const dateToSend = newStudent.date_dernier_expose || new Date().toISOString().split('T')[0];
       
       const response = await fetch(API_BASE_URL, {
-        method: 'POST', // Remplace par 'PUT' si ton endpoint de création est strictement un PUT
+        method: 'POST', 
         headers: {
           'Content-Type': 'application/json',
         },

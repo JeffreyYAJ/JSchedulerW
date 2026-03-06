@@ -202,7 +202,7 @@ const Dashboard = () => {
               <CalendarDays className="text-blue-600" size={20} /> 
               Prochaines Semaines
             </h2>
-            <p className="text-xs text-slate-500 mt-1">Aperçu des 3 prochaines sessions</p>
+            <p className="text-xs text-slate-500 mt-1">Aperçu des 3 prochaines reunions</p>
           </div>
           
           <div className="p-6 flex-1 flex flex-col gap-4">

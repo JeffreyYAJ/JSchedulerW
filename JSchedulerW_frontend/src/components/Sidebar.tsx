@@ -21,7 +21,7 @@ const Sidebar = () => {
           <Calendar className="text-white" size={24} />
         </div>
         <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-500">
-          EduScheduler
+          JWScheduler
         </h1>
       </div>
 
@@ -49,6 +49,7 @@ const Sidebar = () => {
       </nav>
 
       {/* Footer Sidebar */}
+      {/*}
       <div className="space-y-2 pt-6 border-t border-slate-100">
         <button className="w-full flex items-center gap-3 text-slate-500 font-semibold p-3 rounded-xl hover:bg-slate-50 transition-colors">
           <Settings size={20} /> Settings
@@ -56,7 +57,7 @@ const Sidebar = () => {
         <button className="w-full flex items-center gap-3 text-red-500 font-semibold p-3 rounded-xl hover:bg-red-50 transition-colors">
           <LogOut size={20} /> Log out
         </button>
-      </div>
+      </div> */}
     </aside>
   );
 };
