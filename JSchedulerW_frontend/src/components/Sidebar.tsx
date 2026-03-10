@@ -40,12 +40,12 @@ const Sidebar = () => {
           <Calendar size={20} /> Schedule
         </NavLink>
 
-        <button className="w-full flex items-center justify-between text-slate-500 font-semibold p-3 rounded-xl hover:bg-slate-50 transition-colors group">
+        {/*<button className="w-full flex items-center justify-between text-slate-500 font-semibold p-3 rounded-xl hover:bg-slate-50 transition-colors group">
           <div className="flex items-center gap-3"><BellRing size={20} /> Alerts</div>
           <div className="flex items-center justify-center w-6 h-6 bg-red-500 text-white rounded-full text-xs font-bold shadow-md">
             3
           </div>
-        </button>
+        </button>*/}
       </nav>
 
       {/* Footer Sidebar */}
