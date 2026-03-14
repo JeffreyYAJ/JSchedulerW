@@ -7,14 +7,27 @@ const CreateSession = () => {
   const [activeSlot, setActiveSlot] = useState('sketch3'); 
   const [sketch3Type, setSketch3Type] = useState('sketch3'); 
   
-  // États pour les données de l'API
-  const [students, setStudents] = useState([]);
+  interface Student {
+  id: number;
+  nom: string;
+  genre: string;
+  date_dernier_expose: string | null;
+  status?: string;
+}
+
+interface Programme {
+  id: number;
+  date_debut_semaine: string;
+  date_fin_semaine: string;
+  contient_discours: boolean;
+}
+
+  const [students, setStudents] = useState<Student[]>([]);
+  const [upcomingWeeks, setUpcomingWeeks] = useState<Programme[]>([]);
   const [priorityIds, setPriorityIds] = useState(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // État pour stocker toutes les affectations de la session
-  // Format: { lecture: { 1: id_titulaire, 2: id_partenaire }, sketch1: { ... } }
   const [assignments, setAssignments] = useState({
     lecture: { 1: '', 2: '' },
     sketch1: { 1: '', 2: '' },
@@ -23,7 +36,6 @@ const CreateSession = () => {
     discours: { 1: '', 2: '' }
   });
 
-  // 1. CHARGEMENT DES DONNÉES (GET)
   useEffect(() => {
     const fetchStudentsData = async () => {
       setIsLoading(true);
@@ -38,7 +50,6 @@ const CreateSession = () => {
         const prioStudents = await prioRes.json();
 
         setStudents(allStudents);
-        // On stocke les IDs des élèves prioritaires dans un Set pour une recherche rapide
         setPriorityIds(new Set(prioStudents.map(s => s.id)));
       } catch (error) {
         console.error("Erreur lors de la récupération des élèves:", error);
@@ -50,21 +61,16 @@ const CreateSession = () => {
     fetchStudentsData();
   }, []);
 
-  // Clé actuelle pour accéder au bon objet d'affectation
   const currentAssignmentKey = activeSlot === 'sketch3' && sketch3Type === 'discours' ? 'discours' : activeSlot;
 
-  // 2. LOGIQUE DE FILTRAGE INTELLIGENT
-  const getAvailableStudents = (slotId) => {
+  const getAvailableStudents = (slotId: number) => {
     let filtered = [...students];
 
-    // Règle A : Lecture et Discours = Uniquement des Hommes
     if (currentAssignmentKey === 'lecture' || currentAssignmentKey === 'discours') {
       filtered = filtered.filter(s => s.genre === 'H');
     }
 
-    // Règle B : Pour les Sketchs (H-H ou F-F)
     if (slotId === 2) {
-      // Si on choisit l'élève 2, il doit être du MÊME genre que l'élève 1
       const titulaireId = assignments[currentAssignmentKey][1];
       if (titulaireId) {
         const titulaire = students.find(s => s.id.toString() === titulaireId.toString());
@@ -73,21 +79,19 @@ const CreateSession = () => {
         }
       }
     } else if (slotId === 1) {
-      // On empêche de sélectionner l'élève 2 comme élève 1
       const partenaireId = assignments[currentAssignmentKey][2];
       if (partenaireId) {
         filtered = filtered.filter(s => s.id.toString() !== partenaireId.toString());
       }
     }
 
-    // On sépare en deux groupes pour l'affichage (Prioritaires vs Autres)
     const priority = filtered.filter(s => priorityIds.has(s.id));
     const others = filtered.filter(s => !priorityIds.has(s.id));
 
     return { priority, others };
   };
 
-  const handleSelectChange = (slotId, studentId) => {
+  const handleSelectChange = (slotId: number, studentId: string) => {
     setAssignments(prev => ({
       ...prev,
       [currentAssignmentKey]: {
@@ -102,15 +106,12 @@ const CreateSession = () => {
     const id_programme = 1; 
     const payloadPromises = [];
 
-    // On parcourt nos affectations pour créer les requêtes POST
     for (const [exposeKey, roles] of Object.entries(assignments)) {
       if (!roles[1] && !roles[2]) continue; // Si rien n'est rempli, on passe
 
-      // Formatage du nom pour l'API (ex: "sketch1" -> "Sketch 1", "lecture" -> "Lecture")
       let mappedType = exposeKey.replace('sketch', 'Sketch ');
       mappedType = mappedType.charAt(0).toUpperCase() + mappedType.slice(1);
 
-      // Création de la requête pour le Titulaire (Élève 1)
       if (roles[1]) {
         payloadPromises.push(
           fetch(`${API_BASE_URL}/affectations`, {
@@ -121,7 +122,6 @@ const CreateSession = () => {
         );
       }
 
-      // Création de la requête pour le Partenaire (Élève 2)
       if (roles[2]) {
         payloadPromises.push(
           fetch(`${API_BASE_URL}/affectations`, {
@@ -135,8 +135,7 @@ const CreateSession = () => {
 
     try {
       await Promise.all(payloadPromises);
-      alert('Session sauvegardée avec succès ! 🎉');
-      // Optionnel : tu pourrais vider les états ici ou rediriger
+      alert('');
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
       alert("Une erreur s'est produite lors de la sauvegarde.");
@@ -145,7 +144,6 @@ const CreateSession = () => {
     }
   };
 
-  // Configuration de l'interface par défaut
   const getConfigurationSlots = () => {
     switch (activeSlot) {
       case 'lecture': return [{ id: 1, label: 'Lecteur', rule: 'Uniquement des hommes' }];

@@ -4,10 +4,27 @@ import { Search, Plus, Trash2, X, AlertTriangle, BellRing, Clock, CheckCircle2, 
 const API_BASE_URL = 'http://localhost:3000/api/eleves';
 
 const StudentManagement = () => {
-  const [students, setStudents] = useState([]);
+
+  interface Student {
+  id: number;
+  nom: string;
+  genre: string;
+  date_dernier_expose: string | null;
+  status?: string;
+}
+
+interface Programme {
+  id: number;
+  date_debut_semaine: string;
+  date_fin_semaine: string;
+  contient_discours: boolean;
+}
+  const [students, setStudents] = useState<Student[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(null);
+
+
 
   // État pour le formulaire d'ajout
   const [newStudent, setNewStudent] = useState({ nom: '', genre: '', date_dernier_expose: '' });

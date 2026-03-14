@@ -4,9 +4,15 @@ import { CalendarDays, Plus, Calendar, ArrowRight, Loader2, Mic } from 'lucide-r
 
 const API_BASE_URL = 'http://localhost:3000/api';
 
+interface Programme {
+  id: number;
+  date_debut_semaine: string;
+  date_fin_semaine: string;
+  contient_discours: boolean;
+}
 const ProgrammeManagement = () => {
   const navigate = useNavigate();
-  const [programmes, setProgrammes] = useState([]);
+  const [programmes, setProgrammes] = useState<Programme[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,7 +44,7 @@ const ProgrammeManagement = () => {
   };
 
   // 2. Créer une nouvelle semaine
-  const handleCreateProgramme = async (e) => {
+  const handleCreateProgramme = async (e: any) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -52,7 +58,7 @@ const ProgrammeManagement = () => {
       if (response.ok) {
         await fetchProgrammes(); // Recharger la liste
         setIsModalOpen(false); // Fermer la modale
-        setNewProgramme({ date_debut: '', date_fin: '', contient_discours: false }); // Reset
+        setNewProgramme({ date_debut_semaine: '', date_fin_semaine: '', contient_discours: false }); // Reset
       } else {
         alert("Erreur lors de la création de la semaine.");
       }
