@@ -16,7 +16,20 @@ const API_BASE_URL = 'http://localhost:3000/api';
 const Dashboard = () => {
   const navigate = useNavigate();
   
-  // États pour stocker les données
+  interface Student {
+  id: number;
+  nom: string;
+  genre: string;
+  date_dernier_expose: string | null;
+  status?: string;
+}
+
+interface Programme {
+  id: number;
+  date_debut_semaine: string;
+  date_fin_semaine: string;
+  contient_discours: boolean;
+}
   const [priorityStudents, setPriorityStudents] = useState([]);
   const [upcomingWeeks, setUpcomingWeeks] = useState([]);
   const [stats, setStats] = useState({ total: 0, alerts: 0 });
@@ -39,8 +52,8 @@ const Dashboard = () => {
         setPriorityStudents(prioData.slice(0, 5)); 
         
         const sortedProgs = progData
-          .filter(p => new Date(p.date_debut_semaine) >= new Date()) // Uniquement le futur/présent
-          .sort((a, b) => new Date(a.date_debut_semaine) - new Date(b.date_debut_semaine))
+          .filter((p: { date_debut_semaine: string | number | Date; }) => new Date(p.date_debut_semaine) >= new Date()) // Uniquement le futur/présent
+          .sort((a: { date_debut_semaine: string | number | Date; }, b: { date_debut_semaine: string | number | Date; }) => new Date(a.date_debut_semaine) - new Date(b.date_debut_semaine))
           .slice(0, 3);
         setUpcomingWeeks(sortedProgs);
 

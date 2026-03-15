@@ -43,7 +43,6 @@ const ProgrammeManagement = () => {
     }
   };
 
-  // 2. Créer une nouvelle semaine
   const handleCreateProgramme = async (e: any) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -56,8 +55,8 @@ const ProgrammeManagement = () => {
       });
 
       if (response.ok) {
-        await fetchProgrammes(); // Recharger la liste
-        setIsModalOpen(false); // Fermer la modale
+        await fetchProgrammes(); 
+        setIsModalOpen(false); 
         setNewProgramme({ date_debut_semaine: '', date_fin_semaine: '', contient_discours: false }); // Reset
       } else {
         alert("Erreur lors de la création de la semaine.");
