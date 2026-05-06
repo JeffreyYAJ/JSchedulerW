@@ -15,12 +15,9 @@ function createWindow() {
     },
   });
 
-  // Détection du mode (Dev ou Prod)
   if (!app.isPackaged) {
-    // Mode DÉVELOPPEMENT
     mainWindow.loadURL('http://localhost:5173');
   } else {
-    // Mode PRODUCTION
     mainWindow.loadFile(path.join(__dirname, 'JSchedulerW_frontend', 'dist', 'index.html'));
   }
 }
