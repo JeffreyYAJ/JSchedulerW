@@ -6,3 +6,4 @@ bin/
 out/
 build/
 CODE_REVIEW.md
+dist/
