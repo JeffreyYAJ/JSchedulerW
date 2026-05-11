@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Sparkles, BookOpen, Users as UsersIcon, Mic, CheckCircle2, Save, Loader2 } from 'lucide-react';
+import { User, Sparkles, CheckCircle2, Save, Loader2 } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:3000/api';
 
@@ -15,16 +15,33 @@ const CreateSession = () => {
   status?: string;
 }
 
-interface Programme {
-  id: number;
-  date_debut_semaine: string;
-  date_fin_semaine: string;
-  contient_discours: boolean;
-}
+// type SlotId = 1 | 2;
+
+// interface AssignmentSlots {
+//   1: string; // ID de l'élève titulaire
+//   2: string; // ID de l'élève partenaire
+// }
+
+// interface AllAssignments {
+//   lecture: AssignmentSlots;
+//   sketch1: AssignmentSlots;
+//   sketch2: AssignmentSlots;
+//   sketch3: AssignmentSlots;
+//   discours: AssignmentSlots;
+// }
+
+// Et dans ton useState :
+// interface Programme {
+//   id: number;
+//   date_debut_semaine: string;
+//   date_fin_semaine: string;
+//   contient_discours: boolean;
+// }
+
+type AssignmentType = 'lecture' | 'sketch1' | 'sketch2' | 'sketch3' | 'discours';
 
   const [students, setStudents] = useState<Student[]>([]);
-  const [upcomingWeeks, setUpcomingWeeks] = useState<Programme[]>([]);
-  const [priorityIds, setPriorityIds] = useState(new Set());
+  const [priorityIds, setPriorityIds] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -46,8 +63,8 @@ interface Programme {
           fetch(`${API_BASE_URL}/eleves/prioritaires`)
         ]);
 
-        const allStudents = await allRes.json();
-        const prioStudents = await prioRes.json();
+        const allStudents: Student[] = await allRes.json();
+        const prioStudents: Student[] = await prioRes.json();
 
         setStudents(allStudents);
         setPriorityIds(new Set(prioStudents.map(s => s.id)));
@@ -61,8 +78,7 @@ interface Programme {
     fetchStudentsData();
   }, []);
 
-  const currentAssignmentKey = activeSlot === 'sketch3' && sketch3Type === 'discours' ? 'discours' : activeSlot;
-
+  const [currentAssignmentKey, setCurrentAssignmentKey] = useState<AssignmentType>('lecture');
   const getAvailableStudents = (slotId: number) => {
     let filtered = [...students];
 
@@ -231,8 +247,7 @@ interface Programme {
                   <div className="w-full md:w-72">
                     <select 
                       className="w-full p-3 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700 bg-slate-50 cursor-pointer"
-                      value={assignments[currentAssignmentKey][slot.id]}
-                      onChange={(e) => handleSelectChange(slot.id, e.target.value)}
+                      value={assignments[currentAssignmentKey as keyof typeof assignments][slot.id as 1 | 2]}                      onChange={(e) => handleSelectChange(slot.id, e.target.value)}
                     >
                       <option value="">-- Assigner un élève --</option>
                       
