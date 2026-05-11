@@ -1,13 +1,12 @@
-import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
-  Calendar, Users, BellRing, LayoutDashboard, Settings, LogOut 
+  Calendar, Users, LayoutDashboard, 
 } from 'lucide-react';
 
 const Sidebar = () => {
   // Fonction utilitaire pour gérer les classes Tailwind du lien actif
-  const navLinkClass = ({ isActive }) => 
-    `w-full flex items-center gap-3 p-3 rounded-xl font-bold transition-all ${
+  const navLinkClass = ({ isActive }: { isActive: boolean }) =>   
+     `w-full flex items-center gap-3 p-3 rounded-xl font-bold transition-all ${
       isActive 
         ? 'bg-blue-50 text-blue-700 border border-blue-100 shadow-sm' 
         : 'text-slate-500 hover:bg-slate-50'
@@ -20,7 +19,7 @@ const Sidebar = () => {
         <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
           <Calendar className="text-white" size={24} />
         </div>
-        <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-500">
+        <h1 className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-700 to-blue-500">
           JWScheduler
         </h1>
       </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Sparkles, CheckCircle2, Save, Loader2 } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:3000/api';
@@ -78,7 +78,7 @@ type AssignmentType = 'lecture' | 'sketch1' | 'sketch2' | 'sketch3' | 'discours'
     fetchStudentsData();
   }, []);
 
-  const [currentAssignmentKey, setCurrentAssignmentKey] = useState<AssignmentType>('lecture');
+  const [currentAssignmentKey, _setCurrentAssignmentKey] = useState<AssignmentType>('lecture');
   const getAvailableStudents = (slotId: number) => {
     let filtered = [...students];
 
