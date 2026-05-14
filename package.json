@@ -2,6 +2,8 @@
   "name": "JWScheduler-desktop",
   "version": "1.0.0",
   "main": "main.js",
+  "author": "JeffreyYAJ <jeffreyyaj@gmail.com>",
+
   "scripts": {
     "start:backend": "cd JSchedulerW_backend && npm start",
     "start:frontend": "cd JSchedulerW_frontend && npm run dev",
