@@ -2,6 +2,7 @@
   "name": "jwscheduler",
   "private": true,
   "version": "0.0.0",
+  "author": "JeffreyYAJ <jeffreyyaj@gmail.com>",
   "type": "module",
   "scripts": {
     "dev": "vite",
