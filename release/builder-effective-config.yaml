@@ -13,10 +13,6 @@ win:
   target:
     - nsis
     - portable
-mac:
-  target:
-    - dmg
-    - zip
 linux:
   target:
     - AppImage
