@@ -58,7 +58,8 @@
 
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
-const { fork } = require('child_process');
+const { fork, spawn } = require('child_process');
+
 
 let mainWindow;
 let backendProcess;
@@ -81,20 +82,42 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  // Lancement du backend uniquement en production (en dev, concurrently s'en charge)
+  // Lancement du backend uniquement en production
   if (app.isPackaged) {
-    // 👇 MODIFICATION ICI : On remplace 'app.asar' par 'app.asar.unpacked' dans les chemins
+    const { utilityProcess } = require('electron');
+    
     const unpackedDir = __dirname.replace('app.asar', 'app.asar.unpacked');
     const backendPath = path.join(unpackedDir, 'JSchedulerW_backend', 'server.js'); 
     
-    backendProcess = fork(backendPath, [], {
-      cwd: path.join(unpackedDir, 'JSchedulerW_backend'), // 👈 MODIFICATION ICI AUSSI
-      env: { ...process.env, NODE_ENV: 'production' }
-    });
+    // Dossier d'écriture sécurisé fourni par Electron (Ex: ~/.config/JWScheduler-desktop/ sur Linux)
+    const secureDataPath = app.getPath('userData');
 
-    backendProcess.on('error', (err) => {
-      console.error('Erreur du backend en production:', err);
-    });
+    console.log("=== LANCEMENT DU BACKEND ===");
+    console.log("Dossier de stockage BDD sécurisé :", secureDataPath);
+    console.log("Backend path:", backendPath);
+
+    try {
+      // Utiliser utilityProcess.fork() avec les paramètres corrects
+      backendProcess = utilityProcess.fork(backendPath, [secureDataPath]);
+
+      backendProcess.on('spawn', () => {
+        console.log('✅ Le processus Backend est actif et sécurisé !');
+      });
+
+      backendProcess.on('exit', (code) => {
+        console.log(`ℹ️ Le backend s'est arrêté. Code de sortie: ${code}`);
+      });
+
+      backendProcess.on('error', (err) => {
+        console.error('❌ Erreur du backend en production:', err);
+      });
+
+      backendProcess.on('message', (msg) => {
+        console.log('Backend message:', msg);
+      });
+    } catch (err) {
+      console.error('❌ Erreur lors du lancement du backend:', err);
+    }
   }
 
   createWindow();

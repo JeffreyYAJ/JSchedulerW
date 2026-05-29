@@ -1,6 +1,16 @@
 const express = require('express');
 const cors = require('cors');
 const setupDatabase = require('./database.js');
+const fs = require('fs');
+const path = require('path');
+
+// Setup logging to a file in the customDbFolder (will be set after parsing args)
+let logFile = null;
+function logToFile(...args) {
+    if (!logFile) return;
+    const msg = `[${new Date().toISOString()}] ` + args.map(a => (typeof a === 'string' ? a : JSON.stringify(a, null, 2))).join(' ') + '\n';
+    try { fs.appendFileSync(logFile, msg); } catch (e) { /* ignore */ }
+}
 
 const app = express();
 const PORT = 3000;
@@ -10,17 +20,44 @@ app.use(cors());
 
 let db;
 
+
+const customDbFolder = process.argv.find(arg => arg.includes('/')) || __dirname;
+logFile = path.join(customDbFolder, 'backend.log');
+logToFile('=== Backend starting ===');
+logToFile('customDbFolder:', customDbFolder);
+
 async function startServer() {
     try {
-        db = await setupDatabase();
-        
-        app.get('/', (req, res) => {
-            res.send('Ordonnanceur API is running!');
-        });
+        db = await setupDatabase(customDbFolder);
+        logToFile('Database setup complete');
+    } catch (error) {
+        console.error("Failed to start server:", error);
+        logToFile('Failed to start server:', error);
+        return;
+    }
+    app.get('/', (req, res) => {
+        res.send('Ordonnanceur API is running!');
+    });
+    app.listen(PORT, () => {
+        const msg = `Server is running on http://localhost:${PORT}`;
+        console.log(msg);
+        logToFile(msg);
+    });
+}
 
-        app.listen(PORT, () => {
-            console.log(`Server is running on http://localhost:${PORT}`);
-        });
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    logToFile('Uncaught Exception:', err);
+    process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    logToFile('Unhandled Rejection at:', promise, 'reason:', reason);
+    process.exit(1);
+});
 
         // ELEVES ENDPOINTS
         app.get('/api/eleves', async (req, res) => {
@@ -445,10 +482,7 @@ async function startServer() {
                 res.status(500).json({ error: "Erreur lors de la génération automatique." });
             }
         });
-    } catch (error) {
-        console.error("Failed to start server:", error);
-    }
-}
+// End of startServer and file
 
 
 startServer();

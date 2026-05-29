@@ -1,16 +1,21 @@
 const sqlite3 = require('sqlite3');
 const { open } = require('sqlite');
+const path = require('path');
+const fs = require('fs'); 
 
-async function setupDatabase() {
+async function setupDatabase(dbFolder = __dirname) {
+    if (!fs.existsSync(dbFolder)) {
+        fs.mkdirSync(dbFolder, { recursive: true });
+        console.log("-> Dossier de configuration créé avec succès !");
+    }
+
+    const dbPath = path.join(dbFolder, 'database.db');
+    console.log("-> Connexion à la base de données SQLite à :", dbPath);
+
     const db = await open({
-        filename: './database.db',
+        filename: dbPath,
         driver: sqlite3.Database
     });
-
-    
-    // await db.exec(`DROP TABLE IF EXISTS Affectations;`);
-    // await db.exec(`DROP TABLE IF EXISTS Programmes;`);
-    // await db.exec(`DROP TABLE IF EXISTS Eleves;`); 
     
     await db.exec(`
         CREATE TABLE IF NOT EXISTS Eleves (
