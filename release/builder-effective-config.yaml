@@ -2,19 +2,21 @@ directories:
   output: release
   buildResources: build
 appId: com.yaj.jwscheduler
-productName: jwscheduler
+productName: JW Scheduler
+asar: true
+npmRebuild: true
+asarUnpack:
+  - '**/node_modules/sqlite3/**'
 files:
   - filter:
       - main.js
       - package.json
-      - JSchedulerW_backend/**/*
+      - JSchedulerW_backend/database.js
       - JSchedulerW_frontend/dist/**/*
-win:
-  target:
-    - nsis
-    - portable
 linux:
   target:
     - AppImage
     - deb
+  category: Utility
+  icon: build/icon.png
 electronVersion: 40.8.0

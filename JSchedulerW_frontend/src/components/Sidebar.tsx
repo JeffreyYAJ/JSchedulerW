@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router-dom';
-import { 
-  Calendar, Users, LayoutDashboard, 
+import {
+  Calendar, Users, LayoutDashboard,
 } from 'lucide-react';
+import logo from '../logo.png';
 
 const Sidebar = () => {
   // Fonction utilitaire pour gérer les classes Tailwind du lien actif
@@ -16,12 +17,15 @@ const Sidebar = () => {
     <aside className="w-64 bg-white border-r border-slate-200 p-6 flex flex-col shadow-sm z-10 sticky top-0 h-screen">
       {/* Logo */}
       <div className="flex items-center gap-3 mb-10">
-        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200">
-          <Calendar className="text-white" size={24} />
+        <img
+          src={logo}
+          alt="JW Scheduler"
+          className="w-11 h-11 rounded-xl object-contain shadow-md ring-1 ring-slate-100"
+        />
+        <div>
+          <h1 className="text-lg font-bold leading-tight text-slate-800">JW</h1>
+          <p className="text-xs font-semibold tracking-[0.2em] text-slate-500 uppercase">Scheduler</p>
         </div>
-        <h1 className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-blue-700 to-blue-500">
-          JWScheduler
-        </h1>
       </div>
 
       {/* Navigation Links */}
