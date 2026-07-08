@@ -1,0 +1,46 @@
+<Window x:Class="JWScheduler.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="JW Scheduler"
+        Width="1280" Height="800"
+        MinWidth="1024" MinHeight="680"
+        Background="{StaticResource BgBrush}"
+        WindowStartupLocation="CenterScreen"
+        Icon="Assets/logo.png">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="256" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Sidebar -->
+        <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+            <DockPanel Margin="24">
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,32">
+                    <Image Source="Assets/logo.png" Width="44" Height="44" Stretch="Uniform" Margin="0,0,12,0" />
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="JW" FontSize="18" FontWeight="Bold" Foreground="{StaticResource TextBrush}" />
+                        <TextBlock Text="SCHEDULER" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource MutedBrush}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel>
+                    <Button Style="{StaticResource NavButton}" Command="{Binding NavigateDashboardCommand}">
+                        <TextBlock Text="Dashboard" />
+                    </Button>
+                    <Button Style="{StaticResource NavButton}" Command="{Binding NavigateStudentsCommand}">
+                        <TextBlock Text="Élèves" />
+                    </Button>
+                    <Button Style="{StaticResource NavButton}" Command="{Binding NavigateProgrammesCommand}">
+                        <TextBlock Text="Programmes" />
+                    </Button>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Content -->
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+            <ContentControl Content="{Binding CurrentPage}" Margin="0" />
+        </ScrollViewer>
+    </Grid>
+</Window>
