@@ -1,33 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Users, 
-  AlertTriangle, 
-  Download, 
-  Plus, 
-  CalendarDays,
-  ArrowRight,
-  Clock,
-  LayoutDashboard
+import {
+  Users, AlertTriangle, Plus, CalendarDays, ArrowRight, Clock, LayoutDashboard,
 } from 'lucide-react';
-
-const API_BASE_URL = 'http://localhost:3000/api';
-
-// Interfaces TypeScript propres
-interface Student {
-  id: number;
-  nom: string;
-  genre: string;
-  date_dernier_expose: string | null;
-  status?: string;
-}
-
-interface Programme {
-  id: number;
-  date_debut_semaine: string;
-  date_fin_semaine: string;
-  contient_discours: boolean;
-}
+import { apiGet, type Student, type Programme } from '../lib/api';
+import ExportMenu from '../components/ExportMenu';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -36,20 +13,17 @@ const Dashboard = () => {
   const [upcomingWeeks, setUpcomingWeeks] = useState<Programme[]>([]);
   const [stats, setStats] = useState({ total: 0, alerts: 0 });
   const [isLoading, setIsLoading] = useState(true);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
       try {
-        const [prioRes, progRes, allStudentsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/eleves/prioritaires`),
-          fetch(`${API_BASE_URL}/programmes`),
-          fetch(`${API_BASE_URL}/eleves`)
+        const [prioData, progData, allStudentsData] = await Promise.all([
+          apiGet<Student[]>('/eleves/prioritaires'),
+          apiGet<Programme[]>('/programmes'),
+          apiGet<Student[]>('/eleves'),
         ]);
-
-        const prioData = await prioRes.json();
-        const progData = await progRes.json();
-        const allStudentsData = await allStudentsRes.json();
 
         setPriorityStudents(prioData.slice(0, 5)); 
         
@@ -93,10 +67,7 @@ const Dashboard = () => {
             <p className="text-slate-500 font-medium">Vue d'ensemble des attributions et alertes d'exposés.</p>
           </div>
           <div className="flex items-center gap-3">
-            {/* Bouton secondaire professionnel */}
-            <button className="px-5 py-2.5 text-slate-700 font-semibold bg-white/70 hover:bg-white border border-slate-200 backdrop-blur-md rounded-xl transition-all shadow-sm flex items-center gap-2">
-              <Download size={18} /> Exporter
-            </button>
+            <ExportMenu onError={setExportError} />
             {/* Bouton primaire pro */}
             <button 
               onClick={() => navigate('/programmes')}
@@ -106,6 +77,12 @@ const Dashboard = () => {
             </button>
           </div>
         </div>
+
+        {exportError && (
+          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-sm">
+            {exportError}
+          </div>
+        )}
 
         {/* STATS CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
@@ -152,7 +129,10 @@ const Dashboard = () => {
               <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
                 Élèves en attente d'exposé
               </h2>
-              <button className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors">
+              <button
+                onClick={() => navigate('/students')}
+                className="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-colors"
+              >
                 Gérer les élèves <ArrowRight size={16} />
               </button>
             </div>

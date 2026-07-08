@@ -3,6 +3,7 @@ import {
   Calendar, Users, LayoutDashboard,
 } from 'lucide-react';
 import logo from '../logo.png';
+import DataManagement from './DataManagement';
 
 const Sidebar = () => {
   // Fonction utilitaire pour gérer les classes Tailwind du lien actif
@@ -36,11 +37,11 @@ const Sidebar = () => {
 
 
         <NavLink to="/students" className={navLinkClass}>
-          <Users size={20} /> Students
+          <Users size={20} /> Élèves
         </NavLink>
 
         <NavLink to="/programmes" className={navLinkClass}>
-          <Calendar size={20} /> Schedule
+          <Calendar size={20} /> Programmes
         </NavLink>
 
         {/*<button className="w-full flex items-center justify-between text-slate-500 font-semibold p-3 rounded-xl hover:bg-slate-50 transition-colors group">
@@ -51,16 +52,7 @@ const Sidebar = () => {
         </button>*/}
       </nav>
 
-      {/* Footer Sidebar */}
-      {/*}
-      <div className="space-y-2 pt-6 border-t border-slate-100">
-        <button className="w-full flex items-center gap-3 text-slate-500 font-semibold p-3 rounded-xl hover:bg-slate-50 transition-colors">
-          <Settings size={20} /> Settings
-        </button>
-        <button className="w-full flex items-center gap-3 text-red-500 font-semibold p-3 rounded-xl hover:bg-red-50 transition-colors">
-          <LogOut size={20} /> Log out
-        </button>
-      </div> */}
+      <DataManagement />
     </aside>
   );
 };

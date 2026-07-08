@@ -37,8 +37,9 @@
     },
     "files": [
       "main.js",
+      "preload.js",
       "package.json",
-      "JSchedulerW_backend/database.js",
+      "JSchedulerW_backend/**/*",
       "JSchedulerW_frontend/dist/**/*"
     ],
     "linux": {

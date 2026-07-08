@@ -1,231 +1,237 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, Plus, Calendar, ArrowRight, Loader2, Mic, BookOpen } from 'lucide-react';
-
-const API_BASE_URL = 'http://localhost:3000/api';
-
-export interface Programme {
-  id: number;
-  date_debut_semaine: string;
-  date_fin_semaine: string;
-  contient_discours: boolean;
-}
+import {
+  CalendarDays, Plus, Calendar, ArrowRight, Loader2, Mic, BookOpen,
+  Sparkles, Pencil, Trash2,
+} from 'lucide-react';
+import {
+  apiGet, apiPost, apiPut, apiDelete,
+  type Programme, programmeHasDiscours, formatLocalDate,
+} from '../lib/api';
+import ExportMenu from '../components/ExportMenu';
 
 const ProgrammeManagement = () => {
   const navigate = useNavigate();
   const [programmes, setProgrammes] = useState<Programme[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editProgramme, setEditProgramme] = useState<Programme | null>(null);
+  const [deleteProgramme, setDeleteProgramme] = useState<Programme | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Formulaire pour une nouvelle semaine
-  const [newProgramme, setNewProgramme] = useState({
+  const [form, setForm] = useState({
     date_debut_semaine: '',
     date_fin_semaine: '',
-    contient_discours: false
+    contient_discours: false,
   });
 
   const fetchProgrammes = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/programmes`); 
-      if (!response.ok) throw new Error('Erreur réseau');
-      const data: Programme[] = await response.json();
+      const data = await apiGet<Programme[]>('/programmes');
       setProgrammes(data);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des programmes:", error);
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Erreur réseau');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 1. Récupérer les semaines existantes
-  useEffect(() => {
-    fetchProgrammes();
-  }, []);
+  useEffect(() => { fetchProgrammes(); }, []);
 
-  // Typage strict de l'événement du formulaire
-  const handleCreateProgramme = async (e: React.FormEvent<HTMLFormElement>) => {
+  const openCreate = () => {
+    setForm({ date_debut_semaine: '', date_fin_semaine: '', contient_discours: false });
+    setEditProgramme(null);
+    setIsModalOpen(true);
+  };
+
+  const openEdit = (prog: Programme, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setForm({
+      date_debut_semaine: prog.date_debut_semaine,
+      date_fin_semaine: prog.date_fin_semaine,
+      contient_discours: programmeHasDiscours(prog),
+    });
+    setEditProgramme(prog);
+    setIsModalOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
+    setErrorMsg(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/programmes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newProgramme)
-      });
-
-      if (response.ok) {
-        await fetchProgrammes(); 
-        setIsModalOpen(false); 
-        setNewProgramme({ date_debut_semaine: '', date_fin_semaine: '', contient_discours: false }); // Reset
+      if (editProgramme) {
+        await apiPut(`/programmes/${editProgramme.id}`, form);
       } else {
-        alert("Erreur lors de la création de la semaine.");
+        await apiPost('/programmes', form);
       }
-    } catch (error) {
-      console.error("Erreur POST:", error);
+      setIsModalOpen(false);
+      setEditProgramme(null);
+      await fetchProgrammes();
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Erreur');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return (
-    // FOND GLOBAL : Cohérent avec le reste de l'application
-    <div className="flex min-h-screen bg-slate-50 relative overflow-hidden font-sans text-slate-800">
-      
-      {/* Formes d'arrière-plan floutées */}
-      <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[40%] rounded-full bg-blue-200/40 blur-[100px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-5%] w-[30%] h-[30%] rounded-full bg-slate-300/50 blur-[100px] pointer-events-none"></div>
+  const handleGenerer = async () => {
+    if (!confirm('Générer 8 semaines automatiquement à partir d\'aujourd\'hui ?')) return;
+    setIsGenerating(true);
+    try {
+      await apiPost<{ message: string }>('/programmes/generer', {
+        date_debut: formatLocalDate(new Date()),
+        nombre_semaines: 8,
+      });
+      await fetchProgrammes();
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Erreur génération');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
-      <main className="flex-1 p-8 overflow-y-auto relative z-10 w-full max-w-7xl mx-auto animate-in fade-in duration-500">
-        
-        {/* HEADER - Glassmorphism */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 bg-white/60 backdrop-blur-xl p-6 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.02)] border border-white/80 gap-4">
+  const handleDelete = async () => {
+    if (!deleteProgramme) return;
+    try {
+      await apiDelete(`/programmes/${deleteProgramme.id}`);
+      setDeleteProgramme(null);
+      await fetchProgrammes();
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : 'Erreur suppression');
+    }
+  };
+
+  const handleExport = (message: string) => setErrorMsg(message);
+
+  return (
+    <div className="flex min-h-screen bg-slate-50 relative overflow-hidden font-sans text-slate-800">
+      <main className="flex-1 p-8 relative z-10 w-full max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 bg-white/60 backdrop-blur-xl p-6 rounded-2xl border border-white/80 gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight flex items-center gap-3">
-              <CalendarDays className="text-blue-600" size={28} />
-              Semaines & Programmes
+            <h1 className="text-3xl font-extrabold flex items-center gap-3">
+              <CalendarDays className="text-blue-600" size={28} /> Semaines & Programmes
             </h1>
-            <p className="text-slate-500 mt-1 font-medium">Gérez les semaines d'assemblée et planifiez les exposés.</p>
+            <p className="text-slate-500 mt-1">Gérez les semaines d'assemblée et planifiez les exposés.</p>
           </div>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 transition-all shadow-sm active:scale-95 whitespace-nowrap"
-          >
-            <Plus size={20} /> Nouvelle Semaine
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <ExportMenu onError={handleExport} />
+            <button onClick={handleGenerer} disabled={isGenerating}
+              className="px-4 py-2.5 border border-indigo-200 text-indigo-700 rounded-xl font-semibold flex items-center gap-2 hover:bg-indigo-50 disabled:opacity-50">
+              {isGenerating ? <Loader2 className="w-5 h-5 animate-spin" /> : <Sparkles size={18} />}
+              Générer 8 sem.
+            </button>
+            <button onClick={openCreate}
+              className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700">
+              <Plus size={20} /> Nouvelle semaine
+            </button>
+          </div>
         </div>
 
-        {/* LISTE DES SEMAINES */}
+        {errorMsg && (
+          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700">{errorMsg}</div>
+        )}
+
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-4">
-            <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
-            <p className="text-slate-500 font-medium">Chargement du calendrier...</p>
-          </div>
+          <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 text-blue-500 animate-spin" /></div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {programmes.map((prog) => (
-              <div 
-                key={prog.id} 
-                onClick={() => navigate(`/schedule/${prog.id}`)} 
-                className="bg-white/60 backdrop-blur-xl border border-white/80 p-6 rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:bg-white/80 hover:border-blue-200 hover:shadow-md cursor-pointer transition-all group relative flex flex-col"
-              >
-                <div className="w-12 h-12 bg-white border border-slate-100 shadow-sm text-blue-600 rounded-xl flex items-center justify-center mb-5 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                  <Calendar size={24} />
+              <div key={prog.id}
+                onClick={() => navigate(`/schedule/${prog.id}`)}
+                className="bg-white/60 backdrop-blur-xl border border-white/80 p-6 rounded-2xl hover:border-blue-200 cursor-pointer transition-all group flex flex-col">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="w-12 h-12 bg-white border rounded-xl flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white">
+                    <Calendar size={24} />
+                  </div>
+                  <div className="flex gap-1">
+                    <button onClick={(e) => openEdit(prog, e)} className="p-2 text-slate-400 hover:text-blue-600 rounded-lg">
+                      <Pencil size={16} />
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); setDeleteProgramme(prog); }}
+                      className="p-2 text-slate-400 hover:text-red-600 rounded-lg">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
                 </div>
-                
-                <h3 className="text-lg font-extrabold text-slate-800 mb-1">
+                <h3 className="text-lg font-extrabold mb-1">
                   Semaine du {new Date(prog.date_debut_semaine).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
                 </h3>
-                <p className="text-sm font-medium text-slate-500 mb-6">
+                <p className="text-sm text-slate-500 mb-4">
                   Au {new Date(prog.date_fin_semaine).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </p>
-
                 <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-200/50">
-                  <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                    {prog.contient_discours ? (
-                      <span className="flex items-center gap-1.5 text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-md">
-                        <Mic size={14} /> Discours prévu
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-md">
-                        <BookOpen size={14} /> Programme standard
-                      </span>
-                    )}
-                  </div>
-                  <ArrowRight className="text-slate-300 group-hover:text-blue-600 transition-colors" size={20} />
+                  {programmeHasDiscours(prog) ? (
+                    <span className="flex items-center gap-1.5 text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md text-xs font-bold">
+                      <Mic size={14} /> Discours
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md text-xs font-bold">
+                      <BookOpen size={14} /> Standard
+                    </span>
+                  )}
+                  <ArrowRight className="text-slate-300 group-hover:text-blue-600" size={20} />
                 </div>
               </div>
             ))}
-            
             {programmes.length === 0 && (
-              <div className="col-span-full flex flex-col items-center justify-center py-16 bg-white/40 backdrop-blur-sm rounded-2xl border-2 border-dashed border-slate-200/60 text-slate-500 gap-3">
-                <CalendarDays size={32} className="text-slate-300" />
-                <p className="font-medium">Aucune semaine programmée.</p>
-                <button 
-                  onClick={() => setIsModalOpen(true)}
-                  className="text-sm text-blue-600 font-bold hover:underline"
-                >
-                  Créer votre première semaine
-                </button>
+              <div className="col-span-full text-center py-16 text-slate-500 border-2 border-dashed rounded-2xl">
+                Aucune semaine programmée.
               </div>
             )}
           </div>
         )}
       </main>
 
-      {/* MODALE DE CRÉATION (Frosted Glass) */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white/90 backdrop-blur-xl border border-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
-            <div className="p-6 border-b border-slate-200/50 bg-white/40 flex justify-between items-center">
-              <h2 className="text-xl font-bold text-slate-800 flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                  <Plus size={18} strokeWidth={3}/>
-                </div>
-                Créer une semaine
-              </h2>
-            </div>
-
-            <form onSubmit={handleCreateProgramme} className="p-6 space-y-5">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
+            <h2 className="text-xl font-bold mb-6">{editProgramme ? 'Modifier la semaine' : 'Créer une semaine'}</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Date de début</label>
-                  <input 
-                    type="date" 
-                    required
-                    className="w-full p-2.5 bg-white/50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
-                    value={newProgramme.date_debut_semaine}
-                    onChange={(e) => setNewProgramme({...newProgramme, date_debut_semaine: e.target.value})}
-                  />
+                  <label className="block text-sm font-bold mb-1">Date de début</label>
+                  <input type="date" required value={form.date_debut_semaine}
+                    onChange={(e) => setForm({ ...form, date_debut_semaine: e.target.value })}
+                    className="w-full p-2.5 border rounded-xl" />
                 </div>
-
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1.5">Date de fin</label>
-                  <input 
-                    type="date" 
-                    required
-                    className="w-full p-2.5 bg-white/50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
-                    value={newProgramme.date_fin_semaine}
-                    onChange={(e) => setNewProgramme({...newProgramme, date_fin_semaine: e.target.value})}
-                  />
+                  <label className="block text-sm font-bold mb-1">Date de fin</label>
+                  <input type="date" required value={form.date_fin_semaine}
+                    onChange={(e) => setForm({ ...form, date_fin_semaine: e.target.value })}
+                    className="w-full p-2.5 border rounded-xl" />
                 </div>
               </div>
-
-              <div className="flex items-start gap-3 p-4 bg-white/50 rounded-xl border border-slate-200 transition-colors hover:bg-white/80">
-                <div className="flex items-center h-5 mt-0.5">
-                  <input 
-                    type="checkbox" 
-                    id="discours-toggle"
-                    className="w-5 h-5 text-blue-600 rounded border-slate-300 focus:ring-blue-500/20 transition-all cursor-pointer"
-                    checked={newProgramme.contient_discours}
-                    onChange={(e) => setNewProgramme({...newProgramme, contient_discours: e.target.checked})}
-                  />
-                </div>
-                <label htmlFor="discours-toggle" className="text-sm font-medium text-slate-700 cursor-pointer leading-tight">
-                  <span className="block font-bold mb-0.5 text-slate-800">Semaine spéciale</span>
-                  Cochez cette case si la semaine inclut un discours (remplace le cours biblique standard).
-                </label>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 mt-2">
-                <button 
-                  type="button" 
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2.5 text-slate-600 font-bold hover:bg-slate-100 rounded-xl transition-colors border border-transparent hover:border-slate-200"
-                >
-                  Annuler
-                </button>
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting}
-                  className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-sm flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
-                >
-                  {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "Enregistrer la semaine"}
+              <label className="flex items-center gap-3 p-4 border rounded-xl cursor-pointer">
+                <input type="checkbox" checked={form.contient_discours}
+                  onChange={(e) => setForm({ ...form, contient_discours: e.target.checked })} />
+                <span className="text-sm font-medium">Semaine avec discours</span>
+              </label>
+              <div className="flex justify-end gap-3 pt-2">
+                <button type="button" onClick={() => { setIsModalOpen(false); setEditProgramme(null); }}
+                  className="px-5 py-2.5 border rounded-xl font-bold">Annuler</button>
+                <button type="submit" disabled={isSubmitting}
+                  className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold disabled:opacity-50">
+                  {isSubmitting ? 'Enregistrement...' : 'Enregistrer'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {deleteProgramme && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-8 text-center shadow-2xl">
+            <h3 className="text-xl font-bold mb-2">Supprimer cette semaine ?</h3>
+            <p className="text-slate-500 mb-6 text-sm">Les affectations associées seront supprimées.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteProgramme(null)} className="flex-1 py-2.5 border rounded-xl font-bold">Annuler</button>
+              <button onClick={handleDelete} className="flex-1 py-2.5 bg-rose-600 text-white rounded-xl font-bold">Confirmer</button>
+            </div>
           </div>
         </div>
       )}
@@ -234,3 +240,4 @@ const ProgrammeManagement = () => {
 };
 
 export default ProgrammeManagement;
+export type { Programme };
